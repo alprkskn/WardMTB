@@ -1,6 +1,6 @@
 import os 
 from PIL import Image
-from numpy import array, uint8, median
+from numpy import array, uint8, median, percentile
 from math import ceil
 from bitarray import bitarray
 
@@ -13,7 +13,14 @@ SAMPLE_COUNT = 500
 path_set_1 = "C:\HDR_Toolbox\demos\stack"
 path_set_2 = "C:\HDR_Toolbox\demos\stack_alignment"
 
-def get_images(directory, resize):
+def get_images(directory):
+    images = []
+    for d in os.listdir(directory):
+        img = Image.open(directory+'/'+d)
+        images.append(img)
+    return images
+
+def get_images_as_numpy_arrays(directory, resize):
     images = []
     for d in os.listdir(directory):
         img = Image.open(directory+'/'+d)
@@ -65,6 +72,9 @@ class IMG:
         self.compute_mtb()
         print "Init image", median(self.luminances)
 
+    def determine_percentile(self):
+        return 50
+
     def save_mtb(self, path):
         bytes = self.bits.to01()
         arr = []
@@ -82,6 +92,7 @@ class IMG:
         img.save(path, path.split('.')[-1])
 
     def compute_mtb(self):
-        m = median(self.luminances)
+        threshold_percentile = self.determine_percentile()
+        m = percentile(self.luminances, threshold_percentile)
         for p in self.luminances:
             self.bits.append(p > m)
