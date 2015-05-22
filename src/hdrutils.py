@@ -60,6 +60,17 @@ def flatten_luminance_array(arr):
             luminances.append(pixel)
     return luminances
 
+def image_from_bitarray(b_array, width, height):
+    arr = []
+    for x in range(height):
+        row = []
+        for y in range(width):
+            pixel = b_array[x*width+y]
+            row.append([pixel, pixel, pixel])
+        arr.append(row)
+    img = Image.fromarray(array(arr, "uint8") * 255)
+    return img
+
 
 class IMG:
     def __init__(self, image):
@@ -69,11 +80,24 @@ class IMG:
         self.formatted_lum = get_luminances(image)
         self.luminances = flatten_luminance_array(self.formatted_lum)
         self.bits = bitarray()
+        self.exclusion_bits = bitarray()
         self.compute_mtb()
         print "Init image", median(self.luminances)
 
     def determine_percentile(self):
         return 50
+
+    def save_exclusion(self, path):
+        bytes = self.exclusion_bits.to01()
+        arr = []
+        for x in range(self.height):
+            row = []
+            for y in range(self.width):
+                pixel = bytes[x*self.width+y]
+                row.append([pixel, pixel, pixel])
+            arr.append(row)
+        img = Image.fromarray(array(arr, "uint8") * 255)
+        img.save(path, path.split('.')[-1])            
 
     def save_mtb(self, path):
         bytes = self.bits.to01()
@@ -96,3 +120,4 @@ class IMG:
         m = percentile(self.luminances, threshold_percentile)
         for p in self.luminances:
             self.bits.append(p > m)
+            self.exclusion_bits.append((p < (m - 4)) or (p > (m + 4)))
