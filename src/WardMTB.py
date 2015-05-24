@@ -4,9 +4,6 @@ import numpy as np
 from bitarray import bitarray
 from math import ceil
 
-images = hd.get_images_as_numpy_arrays(hd.path_set_1, False)
-
-REFERENCE = ceil(len(images) / 2)
 #i1 = hd.IMG(images[1])
 #i2 = hd.IMG(images[2])
 
@@ -31,10 +28,12 @@ def shrink2(image_struct):
     image = image_struct.image
     width = image.size[0]
     height = image.size[1]
-    img = (image.resize(ceil(width/2), ceil(height/2)))
-    return hd.IMG(np.array(img))
+    img = (image.resize((int(width/2), int(height/2))))
+    return hd.IMG(img)
 
 def column_shift(array, x, width, height):
+    if x == 0:
+        return bitarray(array)
     a = []
     result = bitarray()
     i = 0
@@ -44,16 +43,17 @@ def column_shift(array, x, width, height):
         i+=width
     count = 0
     for row in a:
-        print count
         if x > 0:
             row = bitarray('0' * x) + row[:-x]
         elif x < 0:
-            row = row[x:] + bitarray('0' * x)
-        result += row
+            row = row[abs(x):] + bitarray('0' * abs(x))
+        result.extend(row)
         count+=1
     return result
 
 def row_shift(array, y, width, height):
+    if y == 0:
+        return bitarray(array)
     result = bitarray()
     if y > 0:
         s = '0' * width * y
@@ -102,7 +102,6 @@ def get_exp_shift(img1, img2, shift_bits, shift_ret):
         cur_shift[0] *=2
         cur_shift[1] *=2
     else:
-        print shift_bits
         cur_shift[0] = cur_shift[1] = 0
         tb1 = img1.bits
         eb1 = img1.exclusion_bits
@@ -125,7 +124,26 @@ def get_exp_shift(img1, img2, shift_bits, shift_ret):
                     min_err = err
     return shift_ret
 
-IMG1 = hd.IMG(images[0])
-IMG2 = hd.IMG(images[1])
+def compute_alignments(path,depth):
+    images = hd.get_images(path)
+    #a = bitarray([1,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1])
+    REFERENCE = int(len(images) / 2)
 
-print get_exp_shift(IMG1,IMG2, 3, [0,0])
+    #IMG1 = hd.IMG(images[0])
+    #IMG2 = hd.IMG(images[1])
+
+    #shift_ret = [0,0]
+    #get_exp_shift(IMG1,IMG2, 3, shift_ret)
+    #print shift_ret
+
+    REF = hd.IMG(images[REFERENCE])
+    alignment_shifts = []
+    for i in range(len(images)):
+        img = hd.IMG(images[i])
+        if i == REFERENCE:
+            alignment_shifts.append([0,0])
+            continue
+        shift_ret = [0,0]
+        get_exp_shift(REF, img, depth, shift_ret)
+        alignment_shifts.append(shift_ret)
+    return alignment_shifts

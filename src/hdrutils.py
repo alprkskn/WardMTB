@@ -10,8 +10,8 @@ MAX_SIZE = 1024
 N = 4
 SAMPLE_COUNT = 500
 
-path_set_1 = "C:\HDR_Toolbox\demos\stack"
-path_set_2 = "C:\HDR_Toolbox\demos\stack_alignment"
+path_set_1 = "/home/alprkskn/ceng/771/HDR_Toolbox/demos/stack"
+path_set_2 = "/home/alprkskn/ceng/771/HDR_Toolbox/demos/stack_alignment"
 
 def get_images(directory):
     images = []
@@ -74,10 +74,11 @@ def image_from_bitarray(b_array, width, height):
 
 class IMG:
     def __init__(self, image):
-        self.height = len(image)
-        self.width = len(image[0])
+        self.height = image.size[1]
+        self.width = image.size[0]
         self.image = image
-        self.formatted_lum = get_luminances(image)
+        self.image_array = array(image)
+        self.formatted_lum = get_luminances(self.image_array)
         self.luminances = flatten_luminance_array(self.formatted_lum)
         self.bits = bitarray()
         self.exclusion_bits = bitarray()
@@ -109,7 +110,7 @@ class IMG:
                 row.append([pixel, pixel, pixel])
             arr.append(row)
         img = Image.fromarray(array(arr, "uint8") * 255)
-        img.save(path, path.split('.')[-1])            
+        img.save(path, path.split('.')[-1])
 
     def save_grayscale(self, path):
         img = Image.fromarray(image_array_from_luminances(self.formatted_lum))
